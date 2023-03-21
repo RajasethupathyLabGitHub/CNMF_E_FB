@@ -4,7 +4,7 @@ global  d1 d2 numFrame ssub tsub sframe num2read Fs neuron neuron_ds ...
     neuron_full Ybg_weights; %#ok<NUSED> % global variables, don't change them manually
 
 %% select data and map it to the RAM
-nam = './data_1p.tif';
+nam = 'C:\Users\Andrew T\Desktop\testcement\rawdata\b451rb\t4\ACC.tif';          % insert path to tiff stack here
 cnmfe_choose_data;
 
 %% create Source2D class object for storing results and parameters

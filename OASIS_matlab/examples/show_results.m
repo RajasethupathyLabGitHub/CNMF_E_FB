@@ -18,9 +18,9 @@ set(gca, 'ytick', 0:2);
 ylabel('Fluor.');
 box off;
 if plot_cvx
-    legend('Data', 'Truth', 'OASIS', 'CVX', 'location', 'northeast', 'orientation', 'horizontal');
+    legend('Data', 'Truth', 'OASIS', 'CVX', 'location', 'northeast', 'orientation', 'horizental');
 else
-    legend('Data', 'Truth', 'OASIS', 'location', 'northeast', 'orientation', 'horizontal');
+    legend('Data', 'Truth', 'OASIS', 'location', 'northeast', 'orientation', 'horizental');
 end
 % s
 axes('position', [.05, .18, .95, .37]);

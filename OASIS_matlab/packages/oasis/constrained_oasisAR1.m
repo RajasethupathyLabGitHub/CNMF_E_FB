@@ -82,8 +82,6 @@ g_converged = false;
 
 %% optimize parameters
 tol = 1e-4;
-dphi = 0; 
-
 % flag_lam = true;
 if ~optimize_b   %% don't optimize the baseline b
     %% initialization
@@ -229,7 +227,6 @@ if ~exist('g_range', 'var') || isempty(g_range)
    g_range = [0, 1];  
 end
 %% find the optimal g and get the warm started active_set
-h = []; 
 g = fminbnd(@rss_g, g_range(1), g_range(2));
 yp = y - lam*(1-g);
 for m=1:len_active_set

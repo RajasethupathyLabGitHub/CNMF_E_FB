@@ -65,6 +65,7 @@ if cluster_pixels
     P.psdx = X;
     X = bsxfun(@minus,X,mean(X,2));     % center
     X = bsxfun(@times,X,1./sqrt(mean(X.^2,2)));
+
     [L,Cx] = kmeans_pp(X',2);
     [~,ind] = min(sum(Cx(max(1,end-49):end,:),1));
     P.active_pixels = (L==ind);

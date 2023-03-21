@@ -148,12 +148,11 @@ maxl = max(active_set(:, 4));   % maximum ISI
 c = zeros(size(y));     % the optimal denoised trace
 
 %% find the optimal g and get the warm started active_set
-h = []; 
 g = fminbnd(@rss_g, g_range(1), g_range(2));
 yp = y - lam*(1-g);
 for m=1:len_active_set
     tmp_h = exp(log(g)*(0:maxl)');   % response kernel
-    tmp_hh = cumsum(h.*h);        % hh(k) = h(1:k)'*h(1:k)
+    tmp_hh = cumsum(tmp_h.*tmp_h);        % hh(k) = h(1:k)'*h(1:k)
     li = active_set(m, 4);
     ti = active_set(m, 3);
     idx = ti:(ti+li-1);

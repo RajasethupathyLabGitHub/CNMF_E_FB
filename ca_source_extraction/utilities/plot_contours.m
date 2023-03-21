@@ -1,5 +1,5 @@
 function [CC,jsf] = plot_contours(Aor,Cn,thr,display_numbers,max_number,Coor, ln_wd, ln_col)
-
+%% AT changes: removed a ~ on line 52:  (nargin < 6 || isempty(Coor))
 % save and plot the contour traces of the found spatial components againsts
 % specified background image. The contour is drawn around the value above
 % which a specified fraction of energy is explained (default 99%)
@@ -49,7 +49,7 @@ cmap = hot(3*size(Aor,2));
 else
     cmap = repmat(reshape(ln_col, 1, []), size(Aor,2), 1); 
 end
-if ~(nargin < 6 || isempty(Coor))
+if (nargin < 6 || isempty(Coor))
     CC = Coor;
     for i = 1:size(Aor,2)
 %         cont = medfilt1(Coor{i}')';

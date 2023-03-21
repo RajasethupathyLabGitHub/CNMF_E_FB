@@ -73,9 +73,9 @@ while and(m>=1, m<=length(ind))
             plot(ctr(m, 2), ctr(m, 2));
         else           
             if and(k<m, ~ind_del(k))
-                plot(tmp_con(1, 1:end), tmp_con(2, 1:end), 'color','k', 'linewidth', 2);          
+                plot(tmp_con(1, 1:end), tmp_con(2, 1:end), 'color','k', 'linewidth', 1);          
             elseif k==m
-                plot(tmp_con(1, 1:end), tmp_con(2, 1:end), 'r', 'linewidth', 3);
+                plot(tmp_con(1, 1:end), tmp_con(2, 1:end), 'r', 'linewidth', 2);
             end
         end
         

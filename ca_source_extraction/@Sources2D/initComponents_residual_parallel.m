@@ -142,6 +142,7 @@ PNR = zeros(d1, d2);
 default_kernel = obj.kernel;
 
 results = cell(nr_patch*nc_patch, 1);
+Ys = cell(nr_patch*nc_patch,1);
 if use_parallel
     parfor mpatch=1:(nr_patch*nc_patch)
         % get the indices corresponding to the selected patch
@@ -230,12 +231,12 @@ if use_parallel
         
         
         [tmp_results, tmp_center, tmp_Cn, tmp_PNR, ~] = greedyROI_endoscope(Ypatch, K, tmp_options, [], tmp_save_avi);
-        
         % put everthing into one struct variable
         tmp_results.center = tmp_center;
         tmp_results.Cn = tmp_Cn;
         tmp_results.PNR = tmp_PNR;
         results{mpatch} = tmp_results;
+        Ys{mpatch} = Ypatch;
         %     eval(sprintf('results_patch_%d=tmp_results;', mpatch));  %#ok<PFBFN>
         % display initialization progress
         fprintf('Patch (%2d, %2d) is done. %2d X %2d patches in total. \n', r, c, nr_patch, nc_patch);

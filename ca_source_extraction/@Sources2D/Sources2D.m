@@ -1,4 +1,5 @@
 classdef Sources2D < handle
+% AT changes: include obj.Coor in the .orderROIs function
     
     % This class is a wrapper of Constrained NMF for standard 2D data. It
     % Both CNMF and CNMF-E model can be used.
@@ -54,6 +55,8 @@ classdef Sources2D < handle
         S_df;       % spike counts of neurons normalized by Df
         batches = cell(0);  % results for each small batch data
         file_id = [];    % file id for each batch.
+        
+        orig_frames; % Added by AT on 2/25. Used to keep track of how long the original file was before aligning to behavior
     end
     
     %% methods
@@ -208,7 +211,7 @@ classdef Sources2D < handle
                 frame_range = [1, T];
             end
             Ypatch = get_patch_data(mat_data, patch_pos, frame_range, false);
-            Ypatch(isnan(Ypatch)) = 0;
+            Ypatch(isnan(Ypatch)) = 0; 
         end
         %% distribute data and be ready to run source extraction
         function getReady(obj, pars_envs, filter_kernel)
@@ -404,6 +407,9 @@ classdef Sources2D < handle
         %% pick neurons from the residual
         % for 1P and 2P data, CNMF and CNMF-E
         [center, Cn, PNR] = initComponents_residual_parallel(obj, K, save_avi, use_parallel, min_corr, min_pnr, seed_method)
+        
+        %% Initialize from defined points
+        [center, Cn, PNR] = initComponents_addPoints(obj, K, save_avi, use_parallel, min_corr, min_pnr, seed_method,coords_in)
         
         %------------------------------------------------------------------UPDATE MODEL VARIABLES---%
         %% update background components in parallel
@@ -634,7 +640,16 @@ classdef Sources2D < handle
                     tree = linkage(dd, 'complete');
                     srt = optimalleaforder(tree, dd);
                 else %if strcmpi(srt, 'snr')
-                    snrs = var(obj.C, 0, 2)./var(obj.C_raw-obj.C, 0, 2);
+                    %snrs = var(obj.C, 0, 2)./var(obj.C_raw-obj.C, 0, 2);
+                    tmpC = obj.C_raw;
+                    %tmpC(tmpC<0) = abs(tmpC(tmpC<0));
+                    nn = zeros(size(tmpC,1),1);
+                    for i = 1:numel(nn)
+                       tmpi = tmpC(i,:);
+                       %nn(i) = nanstd(tmpi(tmpi<prctile(tmpi,8)));
+                       nn(i) = nanstd(tmpi' - smooth(tmpi,34));
+                    end
+                    snrs = abs(max(obj.C_raw,[],2))./nn;
                     [~, srt] = sort(snrs, 'descend');
                 end
             end
@@ -646,7 +661,7 @@ classdef Sources2D < handle
                 obj.S = obj.S(srt,:);
                 obj.P.kernel_pars = obj.P.kernel_pars(srt, :);
                 obj.P.neuron_sn = obj.P.neuron_sn(srt);
-                
+                obj.Coor = obj.Coor(srt);
                 obj.ids = obj.ids(srt);
                 obj.tags = obj.tags(srt);
             end
@@ -739,7 +754,11 @@ classdef Sources2D < handle
         %% quick view
         ind_del = viewNeurons(obj, ind, C2, folder_nm);
         displayNeurons(obj, ind, C2, folder_nm);
+        %%
+        ind_del = viewNeurons_fullimage(obj, ind, C2, folder_nm,path_to_file);
         
+        ind_del = viewNeurons_fullimage_2P(obj, ind, C2, Df, folder_nm,path_to_file,adjf);
+
         %% function remove false positives
         function ids = remove_false_positives(obj, show_delete)
             if ~exist('show_delete', 'var')
@@ -1279,9 +1298,9 @@ classdef Sources2D < handle
                 frame_range = obj.frame_range;
             end
             if isempty(obj.frame_range)
-                frame_shift = 0;
+                frame_shift = 0; 
             else
-                frame_shift = 1 - obj.frame_range(1);
+                frame_shift = 1 - obj.frame_range(1); 
             end
             % frames to be loaded for initialization
             T = diff(frame_range) + 1;
@@ -1677,6 +1696,8 @@ classdef Sources2D < handle
         %% merge neruons
         [merged_ROIs, newIDs, obj_bk] = merge_high_corr(obj, show_merge, merge_thr);
         [merged_ROIs, newIDs, obj_bk] = merge_close_neighbors(obj, show_merge, merge_thr);
+        [merged_ROIs, newIDs, obj_bk] = merge_close_neighbors_AT(obj, show_merge, merge_thr,method_dist,path_to_vid);
+
         [merged_ROIs, newIDs, obj_bk] = merge_neurons_dist_corr(obj, show_merge, merge_thr, dmin, method_dist, max_decay_diff);
         
         %% tag neurons with quality control
@@ -1685,8 +1706,9 @@ classdef Sources2D < handle
                 min_pnr = 3;
             end
             A_ = obj.A;
-            %             C_ = obj.C_;
             S_ = obj.S;
+                         C_ = obj.C;
+            
             K = size(A_, 2);
             tags_ = zeros(K, 1, 'like', uint16(0));
             min_pixel = obj.options.min_pixel;
@@ -1797,16 +1819,16 @@ classdef Sources2D < handle
             fprintf('------------- SAVE THE WHOLE WORKSPACE ----------\n\n');
             
             obj.compress_results();
-            file_path = fullfile(obj.P.log_folder,  [strrep(get_date(), ' ', '_'), '.mat']);
+            file_path = fullfile(obj.P.log_folder,  ['final_',strrep(get_date(), ' ', '_'), '.mat']);
+            log_file = obj.P.log_file; 
             if exist('original_logfolder', 'var')
-                obj.P.log_folder = original_log_folder;
+               obj.P.log_folder = original_log_folder;  
             end
             if exist('original_logfile', 'var')
-                obj.P.log_file = original_logfile;
+                obj.P.log_file = original_logfile; 
             end
-            evalin('base', sprintf('save(''%s'', ''neuron'', ''save_*'', ''show_*'', ''use_parallel'', ''with_*'', ''-v7.3''); ', file_path));
+            evalin('caller', sprintf('save(''%s'', ''neuron'', ''save_*'', ''show_*'', ''use_parallel'', ''with_*'', ''-v7.3''); ', file_path));
             try
-                            log_file = obj.P.log_file;
                 fp = fopen(log_file, 'a');
                 fprintf(fp, '\n--------%s--------\n[%s]\bSave the current workspace into file \n\t%s\n\n', get_date(), get_minute(), file_path);
                 fprintf('The current workspace has been saved into file \n\t%s\n\n', file_path);
@@ -1814,9 +1836,9 @@ classdef Sources2D < handle
             end
             
             if exist('zip_file_path', 'var') && ~isempty(zip_file_path)
-                [zip_dir, zip_name, ~] = fileparts(get_fullname(zip_file_path));
-                zip([zip_name, '.zip'], {file_path, log_file}, zip_dir);
-                fprintf('The results and the log files were compresed into file \n%s\n', zip_file_path);
+               [zip_dir, zip_name, ~] = fileparts(get_fullname(zip_file_path)); 
+               zip([zip_name, '.zip'], {file_path, log_file}, zip_dir); 
+               fprintf('The results and the log files were compresed into file \n%s\n', zip_file_path); 
             end
             
         end
@@ -1993,7 +2015,7 @@ classdef Sources2D < handle
                 saveas(gcf, file_path);
             end
         end
-        
+
         %% get contours of the all neurons
         function Coor = get_contours(obj, thr, ind_show)
             A_ = obj.A;
@@ -2042,12 +2064,12 @@ classdef Sources2D < handle
                 if nnz(A_temp)>36
                     l = bwlabel(medfilt2(A_temp>thr_a));
                 else
-                    l = bwlabel(A_temp>=thr_a);
+                    l = bwlabel(A_temp>=thr_a); 
                 end
                 l_most = mode(l(l>0));
                 if isnan(l_most)
-                    Coor{m} = zeros(2, 1);
-                    continue;
+                    Coor{m} = zeros(2, 1); 
+                    continue; 
                 end
                 ind = (l==l_most);
                 A_temp(ind) =  max(A_temp(ind), thr_a);
@@ -2171,7 +2193,7 @@ classdef Sources2D < handle
         
         %% manually merge multiple pairs
         [merged_ROIs, newIDs, obj_bk]  = manual_merge_multi_pairs(obj, MC, show_merge)
-        
+
     end
     
 end

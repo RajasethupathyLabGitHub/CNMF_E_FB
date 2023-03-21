@@ -3,7 +3,7 @@ clear;
 
 addpath(genpath('utilities'));
              
-nam = 'demoMovie.tif';          % insert path to tiff stack here
+nam = 'C:\Users\Andrew T\Desktop\testcement\rawdata\b451rb\t4\ACC2.tif';          % insert path to tiff stack here
 sframe=1;						% user input: first frame to read (optional, default 1)
 num2read=2000;					% user input: how many frames to read   (optional, default until the end)
 
@@ -47,7 +47,7 @@ figure;imagesc(Cn);
     drawnow;
 
 %% manually refine components (optional)
-refine_components = false;  % flag for manual refinement
+refine_components = true;  % flag for manual refinement
 if refine_components
     [Ain,Cin,center] = manually_refine_components(Y,Ain,Cin,center,Cn,tau,options);
 end

@@ -4,7 +4,7 @@ clear;
 
 addpath(genpath('utilities'));
              
-nam = 'demoMovie.tif';          % insert path to tiff stack here
+nam = 'C:\Users\Andrew T\Desktop\testcement\rawdata\b451rb\t4\ACC.tif';          % insert path to tiff stack here
 sframe=1;						% user input: first frame to read (optional, default 1)
 num2read=2000;					% user input: how many frames to read   (optional, default until the end)
 
